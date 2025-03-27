@@ -13,6 +13,7 @@
             --dark-color: #212529;
             --success-color: #4cc9f0;
             --warning-color: #f72585;
+            --speech-color: #7209b7;
             --border-radius: 8px;
             --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             --transition: all 0.3s ease;
@@ -201,7 +202,15 @@
         }
 
         button.replace {
-            background-color: #7209b7;
+            background-color: var(--speech-color);
+        }
+
+        button.speech {
+            background-color: #3a0ca3;
+        }
+
+        button.stop-speech {
+            background-color: #f72585;
         }
 
         #translationResult {
@@ -225,6 +234,27 @@
             font-size: 0.9rem;
             color: #6c757d;
             font-style: italic;
+        }
+
+        .speech-controls {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+            border: 1px solid #e9ecef;
+        }
+
+        .speech-rate-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .error-message {
+            color: var(--warning-color);
+            margin-top: 10px;
+            font-size: 0.9rem;
         }
 
         @media (max-width: 768px) {
@@ -306,6 +336,22 @@
             <button onclick="replaceWithTranslation()" class="replace">🔄 استبدال</button>
         </div>
 
+        <div class="speech-controls">
+            <h2>تحويل النص إلى كلام</h2>
+            <div class="button-group">
+                <button onclick="speakText()" class="speech">▶️ تشغيل</button>
+                <button onclick="stopSpeech()" class="stop-speech">⏹️ إيقاف</button>
+            </div>
+            
+            <div class="speech-rate-control">
+                <label for="speechRate">السرعة:</label>
+                <input type="range" id="speechRate" min="0.5" max="2" step="0.1" value="1">
+                <span id="speechRateValue">1</span>
+            </div>
+            
+            <p id="speechError" class="error-message"></p>
+        </div>
+
         <div id="translationResult"></div>
     </div>
 
@@ -315,7 +361,24 @@
         window.onload = function() {
             loadSettings();
             updateStyles();
+            setupSpeechControls();
+            
+            // التحقق من دوب API تحويل النص إلى كلام
+            if (!('speechSynthesis' in window)) {
+                document.getElementById('speechError').textContent = 'المتصفح لا يدعم ميزة تحويل النص إلى كلام';
+                document.querySelector('.speech-controls button').disabled = true;
+            }
         };
+
+        // إعداد عناصر تحويل النص إلى كلام
+        function setupSpeechControls() {
+            const rateInput = document.getElementById('speechRate');
+            const rateValue = document.getElementById('speechRateValue');
+            
+            rateInput.addEventListener('input', () => {
+                rateValue.textContent = rateInput.value;
+            });
+        }
 
         // تحميل الإعدادات المحفوظة
         function loadSettings() {
@@ -465,6 +528,41 @@
         // استخدام الترجمة (وظيفة مساعدة)
         function useTranslation() {
             replaceWithTranslation();
+        }
+
+        // تحويل النص إلى كلام
+        function speakText() {
+            const text = document.getElementById('diary').value.trim();
+            const errorElement = document.getElementById('speechError');
+            
+            if (!text) {
+                errorElement.textContent = 'الرجاء إدخال نص لتحويله إلى كلام';
+                return;
+            }
+            
+            errorElement.textContent = '';
+            
+            // إيقاف أي كلام جاري
+            window.speechSynthesis.cancel();
+            
+            // إنشاء كلام جديد
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = "en"; // اللغة العربية - السعودية
+            utterance.rate = parseFloat(document.getElementById('speechRate').value);
+            
+            // بدء الكلام
+            window.speechSynthesis.speak(utterance);
+            
+            // معالجة الأخطاء
+            utterance.onerror = function(event) {
+                errorElement.textContent = 'حدث خطأ أثناء تشغيل الصوت: ' + event.error;
+            };
+        }
+
+        // إيقاف الكلام
+        function stopSpeech() {
+            window.speechSynthesis.cancel();
+            document.getElementById('speechError').textContent = '';
         }
     </script>
 </body>
