@@ -312,6 +312,10 @@
                     <option value="de">الألمانية</option>
                     <option value="it">الإيطالية</option>
                     <option value="es">الإسبانية</option>
+                    <option value="zh">الصينية</option>
+                    <option value="ja">اليابانية</option>
+                    <option value="ko">الكورية</option>
+
                 </select>
                 
                 <label for="to_lang">اللغة المطلوبة:</label>
@@ -322,6 +326,10 @@
                     <option value="de">الألمانية</option>
                     <option value="it">الإيطالية</option>
                     <option value="es">الإسبانية</option>
+                    <option value="zh">الصينية</option>
+                    <option value="ja">اليابانية</option>
+                    <option value="ko">الكورية</option>
+
                 </select>
             </div>
         </div>
@@ -529,35 +537,72 @@
         function useTranslation() {
             replaceWithTranslation();
         }
+// تحويل النص إلى كلام مع دعم أفضل للعربية
+function speakText() {
+    const text = document.getElementById('diary').value.trim();
+    const errorElement = document.getElementById('speechError');
+    
+    if (!text) {
+        errorElement.textContent = 'الرجاء إدخال نص لتحويله إلى كلام';
+        return;
+    }
+    
+    // إيقاف أي كلام جاري
+    window.speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // تحديد اللغة العربية (باستخدام كود ar-SA أو ar-EG)
+    utterance.lang = 'ar-SA'; // العربية - السعودية
+    
+    // ضبط سرعة النطق المناسبة للعربية
+    utterance.rate = Math.min(1.2, parseFloat(document.getElementById('speechRate').value || 1));
+    
+    // البحث عن صوت عربي متاح
+    const voices = window.speechSynthesis.getVoices();
+    const arabicVoice = voices.find(voice => 
+        voice.lang === 'ar-SA' || 
+        voice.lang === 'ar-EG' || 
+        voice.lang.startsWith('ar-')
+    );
+    
+    if (arabicVoice) {
+        utterance.voice = arabicVoice;
+    } else if (voices.length > 0) {
+        // استخدام الصوت الافتراضي إذا لم يوجد صوت عربي
+        utterance.voice = voices[0];
+        errorElement.textContent ="تنبيه: يتم استخدام صوت غير عربي لأن النظام لا يحتوي على الاصوات";
+    } else {
+        errorElement.textContent = 'لا توجد أصوات متاحة. الرجاء تثبيت أصوات اللغة على نظامك.';
+        return;
+    }
+    
+    // بدء الكلام
+    window.speechSynthesis.speak(utterance);
+    
+    // معالجة الأخطاء
+    utterance.onerror = function(event) {
+        errorElement.textContent = 'حدث خطأ: ' + event.error;
+    };
+    
+    // رسالة عند انتهاء الكلام
+    utterance.onend = function() {
+        console.log('تم الانتهاء من النطق');
+    };
+}
 
-        // تحويل النص إلى كلام
-        function speakText() {
-            const text = document.getElementById('diary').value.trim();
-            const errorElement = document.getElementById('speechError');
-            
-            if (!text) {
-                errorElement.textContent = 'الرجاء إدخال نص لتحويله إلى كلام';
-                return;
-            }
-            
-            errorElement.textContent = '';
-            
-            // إيقاف أي كلام جاري
-            window.speechSynthesis.cancel();
-            
-            // إنشاء كلام جديد
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = "en"; // اللغة العربية - السعودية
-            utterance.rate = parseFloat(document.getElementById('speechRate').value);
-            
-            // بدء الكلام
-            window.speechSynthesis.speak(utterance);
-            
-            // معالجة الأخطاء
-            utterance.onerror = function(event) {
-                errorElement.textContent = 'حدث خطأ أثناء تشغيل الصوت: ' + event.error;
-            };
-        }
+// إيقاف الكلام (تبقى كما هي)
+function stopSpeech() {
+    window.speechSynthesis.cancel();
+    document.getElementById('speechError').textContent = '';
+}
+
+// تحميل الأصوات عند بدء التشغيل (أضف هذا في window.onload)
+if ('speechSynthesis' in window) {
+    window.speechSynthesis.onvoiceschanged = function() {
+        console.log('الأصوات المتاحة:', window.speechSynthesis.getVoices());
+    };
+}
 
         // إيقاف الكلام
         function stopSpeech() {
