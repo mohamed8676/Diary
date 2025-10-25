@@ -283,7 +283,6 @@
                 <h2>إعدادات النص</h2>
                 <label for="fontSize">حجم الخط: <span id="fontSizeValue">20px</span></label>
                 <input type="range" id="fontSize" min="10" max="50" value="20" oninput="updateStyles()">
-                
                 <label>لون النص:</label>
                 <div class="color-controls">
                     <div class="color-slider">
@@ -315,9 +314,7 @@
                     <option value="zh">الصينية</option>
                     <option value="ja">اليابانية</option>
                     <option value="ko">الكورية</option>
-
                 </select>
-                
                 <label for="to_lang">اللغة المطلوبة:</label>
                 <select id="to_lang">
                     <option value="en">الإنجليزية</option>
@@ -329,7 +326,6 @@
                     <option value="zh">الصينية</option>
                     <option value="ja">اليابانية</option>
                     <option value="ko">الكورية</option>
-
                 </select>
             </div>
         </div>
@@ -350,13 +346,11 @@
                 <button onclick="speakText()" class="speech">▶️ تشغيل</button>
                 <button onclick="stopSpeech()" class="stop-speech">⏹️ إيقاف</button>
             </div>
-            
             <div class="speech-rate-control">
                 <label for="speechRate">السرعة:</label>
                 <input type="range" id="speechRate" min="0.5" max="2" step="0.1" value="1">
                 <span id="speechRateValue">1</span>
             </div>
-            
             <p id="speechError" class="error-message"></p>
         </div>
 
@@ -365,45 +359,34 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script>
-        // تحميل الإعدادات عند بدء التشغيل
         window.onload = function() {
             loadSettings();
             updateStyles();
             setupSpeechControls();
-            
-            // التحقق من دوب API تحويل النص إلى كلام
             if (!('speechSynthesis' in window)) {
                 document.getElementById('speechError').textContent = 'المتصفح لا يدعم ميزة تحويل النص إلى كلام';
                 document.querySelector('.speech-controls button').disabled = true;
             }
         };
 
-        // إعداد عناصر تحويل النص إلى كلام
         function setupSpeechControls() {
             const rateInput = document.getElementById('speechRate');
             const rateValue = document.getElementById('speechRateValue');
-            
             rateInput.addEventListener('input', () => {
                 rateValue.textContent = rateInput.value;
             });
         }
 
-        // تحميل الإعدادات المحفوظة
         function loadSettings() {
-            // تحميل النص
             const savedText = localStorage.getItem('diaryText');
             if (savedText) {
                 document.getElementById('diary').value = savedText;
             }
-            
-            // تحميل حجم الخط
             const savedFontSize = localStorage.getItem('fontSize');
             if (savedFontSize) {
                 document.getElementById('fontSize').value = savedFontSize;
                 document.getElementById('fontSizeValue').textContent = savedFontSize + 'px';
             }
-            
-            // تحميل الألوان
             const savedColor = localStorage.getItem('textColor');
             if (savedColor) {
                 const color = JSON.parse(savedColor);
@@ -413,35 +396,24 @@
             }
         }
 
-        // حفظ الإعدادات
         function saveDiary() {
-            // حفظ النص
             const diaryText = document.getElementById('diary').value;
             localStorage.setItem('diaryText', diaryText);
-            
-            // حفظ حجم الخط
             const fontSize = document.getElementById('fontSize').value;
             localStorage.setItem('fontSize', fontSize);
-            
-            // حفظ اللون
             const color = {
                 r: document.getElementById('red').value,
                 g: document.getElementById('green').value,
                 b: document.getElementById('blue').value
             };
             localStorage.setItem('textColor', JSON.stringify(color));
-            
             alert('تم حفظ المفكرة بنجاح!');
         }
 
-        // تحديث المظهر
         function updateStyles() {
-            // تحديث حجم الخط
             const fontSize = document.getElementById('fontSize').value;
             document.getElementById('diary').style.fontSize = fontSize + 'px';
             document.getElementById('fontSizeValue').textContent = fontSize + 'px';
-            
-            // تحديث اللون
             const red = document.getElementById('red').value;
             const green = document.getElementById('green').value;
             const blue = document.getElementById('blue').value;
@@ -450,7 +422,6 @@
             document.getElementById('colorPreview').style.backgroundColor = color;
         }
 
-        // مسح الدفتر
         function clearDiary() {
             if (confirm('هل أنت متأكد أنك تريد مسح كل النص؟')) {
                 document.getElementById('diary').value = '';
@@ -458,42 +429,33 @@
             }
         }
 
-        // تنزيل الدفتر
         function downloadDiary() {
             const text = document.getElementById('diary').value;
             if (!text) {
                 alert('لا يوجد محتوى لتنزيله');
                 return;
             }
-            
             const filename = "مفكرتي_" + new Date().toISOString().split('T')[0] + ".txt";
             const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
             saveAs(blob, filename);
         }
 
-        // دالة الترجمة
         async function translateText() {
             const text = document.getElementById('diary').value;
             const fromLang = document.getElementById('from_lang').value;
             const toLang = document.getElementById('to_lang').value;
-            
             if (!text.trim()) {
                 alert('الرجاء إدخال نص للترجمة');
                 return;
             }
-            
             const resultDiv = document.getElementById('translationResult');
             resultDiv.innerHTML = '<p>جاري الترجمة، الرجاء الانتظار...</p>';
-            
             try {
                 const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${fromLang}|${toLang}`);
-                
                 if (!response.ok) {
                     throw new Error('فشل في الاتصال بخدمة الترجمة');
                 }
-                
                 const data = await response.json();
-                
                 if (data.responseData && data.responseData.translatedText) {
                     resultDiv.innerHTML = `
                         <h3>نتيجة الترجمة:</h3>
@@ -510,104 +472,69 @@
                     <p style="color: var(--warning-color);">حدث خطأ في الترجمة: ${error.message}</p>
                     <p>سيتم توجيهك إلى Google Translate كبديل...</p>
                 `;
-                
                 setTimeout(() => {
                     window.open(`https://translate.google.com/?sl=${fromLang}&tl=${toLang}&text=${encodeURIComponent(text)}`, '_blank');
                 }, 2000);
             }
         }
 
-        // استبدال النص بالترجمة
         async function replaceWithTranslation() {
             const resultDiv = document.getElementById('translationResult');
             const translation = resultDiv.querySelector('p:nth-of-type(1)');
-            
             if (!translation || !translation.textContent || translation.textContent.includes('جاري الترجمة')) {
                 alert('لا يوجد ترجمة لاستبدالها. الرجاء تنفيذ الترجمة أولاً.');
                 return;
             }
-            
             if (confirm('هل تريد استبدال النص الحالي بالترجمة؟ سيتم حفظ التغييرات تلقائيًا.')) {
                 document.getElementById('diary').value = translation.textContent;
                 saveDiary();
             }
         }
 
-        // استخدام الترجمة (وظيفة مساعدة)
         function useTranslation() {
             replaceWithTranslation();
         }
-// تحويل النص إلى كلام مع دعم أفضل للعربية
-function speakText() {
-    const text = document.getElementById('diary').value.trim();
-    const errorElement = document.getElementById('speechError');
-    
-    if (!text) {
-        errorElement.textContent = 'الرجاء إدخال نص لتحويله إلى كلام';
-        return;
-    }
-    
-    // إيقاف أي كلام جاري
-    window.speechSynthesis.cancel();
-    
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    // تحديد اللغة العربية (باستخدام كود ar-SA أو ar-EG)
-    utterance.lang = 'ar-SA'; // العربية - السعودية
-    
-    // ضبط سرعة النطق المناسبة للعربية
-    utterance.rate = Math.min(1.2, parseFloat(document.getElementById('speechRate').value || 1));
-    
-    // البحث عن صوت عربي متاح
-    const voices = window.speechSynthesis.getVoices();
-    const arabicVoice = voices.find(voice => 
-        voice.lang === 'ar-SA' || 
-        voice.lang === 'ar-EG' || 
-        voice.lang.startsWith('ar-')
-    );
-    
-    if (arabicVoice) {
-        utterance.voice = arabicVoice;
-    } else if (voices.length > 0) {
-        // استخدام الصوت الافتراضي إذا لم يوجد صوت عربي
-        utterance.voice = voices[0];
-        errorElement.textContent ="تنبيه: يتم استخدام صوت غير عربي لأن النظام لا يحتوي على الاصوات";
-    } else {
-        errorElement.textContent = 'لا توجد أصوات متاحة. الرجاء تثبيت أصوات اللغة على نظامك.';
-        return;
-    }
-    
-    // بدء الكلام
-    window.speechSynthesis.speak(utterance);
-    
-    // معالجة الأخطاء
-    utterance.onerror = function(event) {
-        errorElement.textContent = 'حدث خطأ: ' + event.error;
-    };
-    
-    // رسالة عند انتهاء الكلام
-    utterance.onend = function() {
-        console.log('تم الانتهاء من النطق');
-    };
-}
 
-// إيقاف الكلام (تبقى كما هي)
-function stopSpeech() {
-    window.speechSynthesis.cancel();
-    document.getElementById('speechError').textContent = '';
-}
+        function speakText() {
+            const text = document.getElementById('diary').value.trim();
+            const errorElement = document.getElementById('speechError');
+            if (!text) {
+                errorElement.textContent = 'الرجاء إدخال نص لتحويله إلى كلام';
+                return;
+            }
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ar-SA';
+            utterance.rate = Math.min(1.2, parseFloat(document.getElementById('speechRate').value || 1));
+            const voices = window.speechSynthesis.getVoices();
+            const arabicVoice = voices.find(voice => voice.lang === 'ar-SA' || voice.lang === 'ar-EG' || voice.lang.startsWith('ar-'));
+            if (arabicVoice) {
+                utterance.voice = arabicVoice;
+            } else if (voices.length > 0) {
+                utterance.voice = voices[0];
+                errorElement.textContent = "تنبيه: يتم استخدام صوت غير عربي لأن النظام لا يحتوي على الاصوات";
+            } else {
+                errorElement.textContent = 'لا توجد أصوات متاحة. الرجاء تثبيت أصوات اللغة على نظامك.';
+                return;
+            }
+            window.speechSynthesis.speak(utterance);
+            utterance.onerror = function(event) {
+                errorElement.textContent = 'حدث خطأ: ' + event.error;
+            };
+            utterance.onend = function() {
+                console.log('تم الانتهاء من النطق');
+            };
+        }
 
-// تحميل الأصوات عند بدء التشغيل (أضف هذا في window.onload)
-if ('speechSynthesis' in window) {
-    window.speechSynthesis.onvoiceschanged = function() {
-        console.log('الأصوات المتاحة:', window.speechSynthesis.getVoices());
-    };
-}
-
-        // إيقاف الكلام
         function stopSpeech() {
             window.speechSynthesis.cancel();
             document.getElementById('speechError').textContent = '';
+        }
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = function() {
+                console.log('الأصوات المتاحة:', window.speechSynthesis.getVoices());
+            };
         }
     </script>
 </body>
